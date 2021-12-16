@@ -41,3 +41,36 @@ A simple reentrancy example.
    ```
    hardhat balances
    ```
+
+## How to fix it
+
+### Using Checks-Effects-Interactions pattern
+
+This pattern is officially recommanded in [solidity docs](https://docs.soliditylang.org/en/v0.8.10/security-considerations.html#use-the-checks-effects-interactions-pattern).
+
+It means splitting every functions in 3 parts, and writing them **in this order** :
+
+- **Checks**: requires etc...
+- **Effects**: state variable updates
+- **Interactions**: transfers, internal or external functions calls
+
+Tip: Consensys recommands to add `unTrusted` prefix on functions that make untrusted external contracts call, and on functions which calls these untrusted functions. This allow to have a clear view of what is dangerous in you contract, and to remember to put them at the end of the functions.
+
+### Using MutExs
+
+It basically blocks function entrance before the end of its execution. Concretly, require a variable `locked` to be false at the beginning of the function, and set it to true before the beginning of the function body. Set it back to false at the end of the body.
+
+Simple example :
+
+```
+bool private locked;
+
+function dangerousWithdraw() {
+   require(!locked);
+   locked = true;
+
+   // function body with external contract call
+
+   locked = false;
+}
+```
